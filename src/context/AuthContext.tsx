@@ -14,8 +14,6 @@ export default function AuthProvider({ children }: any) {
             isLoading: false,
           }
         case 'SIGN_IN':
-          AsyncStorage.setItem('userToken', action.token)
-          AsyncStorage.setItem('user', JSON.stringify(action.user))
           return {
             ...prevState,
             isSignout: false,
@@ -23,6 +21,8 @@ export default function AuthProvider({ children }: any) {
             user: action.user,
           }
         case 'SIGN_OUT':
+          AsyncStorage.removeItem('userToken')
+          AsyncStorage.removeItem('user')
           return {
             ...prevState,
             isSignout: true,
@@ -46,16 +46,20 @@ export default function AuthProvider({ children }: any) {
 
       try {
         userToken = await AsyncStorage.getItem('userToken')
-        user = await AsyncStorage.getItem(JSON.stringify('user'))
+        user = await AsyncStorage.getItem('user')
+        console.log({ user })
+
+        // This will switch to the App screen or Auth screen and this loading
+        // screen will be unmounted and thrown away.
+        dispatch({
+          type: 'RESTORE_TOKEN',
+          token: userToken,
+          user: user && user.length ? JSON.parse(user) : null,
+        })
       } catch (e) {
         // Restoring token failed
+        dispatch({ type: 'SIGN_OUT' })
       }
-
-      // After restoring token, we may need to validate it in production apps
-
-      // This will switch to the App screen or Auth screen and this loading
-      // screen will be unmounted and thrown away.
-      dispatch({ type: 'RESTORE_TOKEN', token: userToken, user: user ? JSON.parse(user) : null })
     }
 
     bootstrapAsync()

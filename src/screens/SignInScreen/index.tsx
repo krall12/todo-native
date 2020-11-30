@@ -1,5 +1,5 @@
 import React from 'react'
-import { View, TextInput, Button, Text } from 'react-native'
+import { View, TextInput, Button } from 'react-native'
 import { AuthContext } from '../../context/AuthContext'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
