@@ -6,10 +6,18 @@ import { StatusBar } from 'expo-status-bar'
 import HomeScreen from '../screens/HomeScreen'
 import SettingsScreen from '../screens/SettingsScreen'
 import { routes } from '../config'
+import { AuthContext } from '../context/AuthContext'
+import SignInScreen from '../screens/SignInScreen'
 
 const Tab = createBottomTabNavigator()
 
 export default function RootNavigation() {
+  const { userToken } = React.useContext(AuthContext)
+
+  if (!userToken) {
+    return <SignInScreen />
+  }
+
   return (
     <NavigationContainer>
       <StatusBar style="dark" />
