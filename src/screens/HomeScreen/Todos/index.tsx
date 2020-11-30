@@ -1,10 +1,11 @@
 import React from 'react'
 import { View, FlatList, ActivityIndicator, RefreshControl } from 'react-native'
 import { AuthContext } from '../../../context/AuthContext'
-import { useQuery } from 'react-query'
-import { List, ListItem, Left, Right, Text, Body, Icon, CheckBox } from 'native-base'
+import { useQuery, useQueryCache } from 'react-query'
+import { List, ListItem, Right, Text, Body, Icon, CheckBox } from 'native-base'
 
 export default function HomeScreen() {
+  const queryCache = useQueryCache()
   const context = React.useContext(AuthContext)
   const [refreshing, setRefreshing] = React.useState(false)
 
@@ -20,26 +21,41 @@ export default function HomeScreen() {
     setRefreshing(false)
   }
 
+  const handleToggleComplete = async (todo: any) => {
+    try {
+      await fetch('http://192.168.1.172:3001/api/todos/' + todo.id, {
+        method: 'PATCH',
+        body: JSON.stringify({ ...todo, isComplete: !todo.isComplete }),
+        headers: { 'Content-Type': 'application/json' },
+      })
+
+      await queryCache.refetchQueries(['todos'])
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
   if (status === 'loading') {
     return <ActivityIndicator />
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#fff' }}>
+    <View style={{ flex: 1 }}>
       <FlatList
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         data={todos}
-        keyExtractor={(item) => String(item.id)}
         renderItem={({ item }) => (
-          <List>
-            <ListItem avatar onPress={console.log}>
-              <CheckBox checked={!!item.isComplete} />
+          <List style={{ backgroundColor: '#fff' }}>
+            <ListItem avatar>
+              <CheckBox checked={!!item.isComplete} onPress={() => handleToggleComplete(item)} />
               <Body>
                 <Text>{item.title}</Text>
                 <Text note>{item.description}</Text>
               </Body>
-              <Right style={{ alignSelf: 'center' }}>
-                <Icon name="arrow-forward" />
+              <Right>
+                <View style={{ flex: 1, justifyContent: 'center' }}>
+                  <Icon name="arrow-forward" />
+                </View>
               </Right>
             </ListItem>
           </List>
