@@ -28,6 +28,7 @@
     "react-native-screens": "~2.10.1",
     "react-native-web": "~0.13.12",
     "react-query": "^2.26.3",
+    "reanimated-bottom-sheet": "^1.0.0-alpha.22",
     "yarn": "^1.22.10"
   },
   "devDependencies": {
