@@ -4,8 +4,8 @@ import { AuthContext } from '../../context/AuthContext'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 export default function SignInScreen() {
-  const [email, setEmail] = React.useState('')
-  const [password, setPassword] = React.useState('')
+  const [email, setEmail] = React.useState('ben@brandcoders.com')
+  const [password, setPassword] = React.useState('password')
 
   const { signIn, userToken } = React.useContext(AuthContext)
 

@@ -78,7 +78,7 @@ export default function AuthProvider({ children }: any) {
         // After getting token, we need to persist the token using `AsyncStorage`
         // In the example, we'll use a dummy token
         try {
-          const result = await fetch('http://localhost:3001/api/login', {
+          const result = await fetch('http://192.168.1.172:3001/api/login', {
             method: 'POST',
             body: JSON.stringify({ email: data.email, password: data.password }),
             headers: { 'Content-Type': 'application/json' },

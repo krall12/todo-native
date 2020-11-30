@@ -3,6 +3,7 @@ import RootNavigation from './src/components/RootNavigation'
 import { setConsole, QueryCache, ReactQueryCacheProvider } from 'react-query'
 import AuthContextProvider from './src/context/AuthContext'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
+import { ThemeProvider, theme } from 'react-native-design-system'
 
 setConsole({
   log: console.log,
@@ -17,7 +18,9 @@ export default function App() {
     <SafeAreaProvider>
       <AuthContextProvider>
         <ReactQueryCacheProvider queryCache={queryCache}>
-          <RootNavigation />
+          <ThemeProvider value={theme}>
+            <RootNavigation />
+          </ThemeProvider>
         </ReactQueryCacheProvider>
       </AuthContextProvider>
     </SafeAreaProvider>
