@@ -4,6 +4,7 @@ import { NavigationContainer } from '@react-navigation/native'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import HomeScreen from '../screens/HomeScreen'
 import SettingsScreen from '../screens/SettingsScreen'
+import { routes } from '../config'
 
 const Tab = createBottomTabNavigator()
 
@@ -12,14 +13,15 @@ export default function RootNavigation() {
     <NavigationContainer>
       <Tab.Navigator>
         <Tab.Screen
-          name="Home"
+          name={routes.home}
           component={HomeScreen}
           options={{
             tabBarIcon: ({ color, size }) => <Ionicons name="ios-list" size={size} color={color} />,
           }}
         />
+
         <Tab.Screen
-          name="Settings"
+          name={routes.settings}
           component={SettingsScreen}
           options={{
             tabBarIcon: ({ color, size }) => <Ionicons name="ios-cog" size={size} color={color} />,
