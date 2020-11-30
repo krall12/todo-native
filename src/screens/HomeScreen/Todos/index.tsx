@@ -1,7 +1,8 @@
 import React from 'react'
-import { Text, View, FlatList, ActivityIndicator, RefreshControl } from 'react-native'
+import { View, FlatList, ActivityIndicator, RefreshControl } from 'react-native'
 import { AuthContext } from '../../../context/AuthContext'
 import { useQuery } from 'react-query'
+import { List, ListItem, Left, Right, Text, Body, Icon, CheckBox } from 'native-base'
 
 export default function HomeScreen() {
   const context = React.useContext(AuthContext)
@@ -24,15 +25,24 @@ export default function HomeScreen() {
   }
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: '#fff' }}>
       <FlatList
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         data={todos}
         keyExtractor={(item) => String(item.id)}
         renderItem={({ item }) => (
-          <View style={{ backgroundColor: 'rgba(255, 0 ,0, .4)' }}>
-            <Text>{item.title}</Text>
-          </View>
+          <List>
+            <ListItem avatar onPress={console.log}>
+              <CheckBox checked={!!item.isComplete} />
+              <Body>
+                <Text>{item.title}</Text>
+                <Text note>{item.description}</Text>
+              </Body>
+              <Right style={{ alignSelf: 'center' }}>
+                <Icon name="arrow-forward" />
+              </Right>
+            </ListItem>
+          </List>
         )}
       />
     </View>
