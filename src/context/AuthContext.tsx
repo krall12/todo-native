@@ -11,9 +11,12 @@ export default function AuthProvider({ children }: any) {
           return {
             ...prevState,
             userToken: action.token,
+            user: action.user,
             isLoading: false,
           }
         case 'SIGN_IN':
+          AsyncStorage.setItem('userToken', action.token)
+          AsyncStorage.setItem('user', JSON.stringify(action.user))
           return {
             ...prevState,
             isSignout: false,
@@ -27,7 +30,6 @@ export default function AuthProvider({ children }: any) {
             ...prevState,
             isSignout: true,
             userToken: null,
-            user: null,
           }
       }
     },
@@ -47,15 +49,16 @@ export default function AuthProvider({ children }: any) {
       try {
         userToken = await AsyncStorage.getItem('userToken')
         user = await AsyncStorage.getItem('user')
-        console.log({ user })
 
         // This will switch to the App screen or Auth screen and this loading
         // screen will be unmounted and thrown away.
-        dispatch({
-          type: 'RESTORE_TOKEN',
-          token: userToken,
-          user: user && user.length ? JSON.parse(user) : null,
-        })
+        if (userToken && user) {
+          dispatch({
+            type: 'RESTORE_TOKEN',
+            token: userToken,
+            user: JSON.parse(user),
+          })
+        }
       } catch (e) {
         // Restoring token failed
         dispatch({ type: 'SIGN_OUT' })
@@ -82,7 +85,10 @@ export default function AuthProvider({ children }: any) {
           })
 
           const res = await result.json()
-          dispatch({ type: 'SIGN_IN', token: res.token, user: res.user })
+          console.log(res)
+          if (res.token) {
+            dispatch({ type: 'SIGN_IN', token: res.token, user: res.user })
+          }
         } catch (error) {
           console.log(error)
         }
