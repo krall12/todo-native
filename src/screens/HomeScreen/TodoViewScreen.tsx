@@ -1,10 +1,10 @@
 import React from 'react'
 import { View, FlatList, ActivityIndicator, RefreshControl } from 'react-native'
-import { AuthContext } from '../../../context/AuthContext'
+import { AuthContext } from '../../context/AuthContext'
 import { useQuery, useQueryCache } from 'react-query'
 import { List, ListItem, Right, Text, Body, Icon, CheckBox } from 'native-base'
 
-export default function HomeScreen() {
+export default function TodoViewScreen() {
   const queryCache = useQueryCache()
   const context = React.useContext(AuthContext)
   const [refreshing, setRefreshing] = React.useState(false)
@@ -44,6 +44,7 @@ export default function HomeScreen() {
       <FlatList
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         data={todos}
+        keyExtractor={(item) => String(item.id)}
         renderItem={({ item }) => (
           <List style={{ backgroundColor: '#fff' }}>
             <ListItem avatar>
