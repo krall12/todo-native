@@ -1,6 +1,11 @@
 import { View, Text, Card, CardItem, Body, Content, Container } from 'native-base'
 import * as React from 'react'
 import { useQuery } from 'react-query'
+import { Audio } from 'expo-av'
+import { TouchableOpacity } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
+
+const soundObject = new Audio.Sound()
 
 export default function TodoSingleScreen({ navigation, route }) {
   const { data, status } = useQuery(['tood', route.params.todoId], () =>
@@ -27,6 +32,11 @@ export default function TodoSingleScreen({ navigation, route }) {
     )
   }
 
+  const playAudio = async () => {
+    const { sound } = await Audio.Sound.createAsync({ uri: todo.audioUrl }, {}, null, true)
+    await sound.playAsync()
+  }
+
   return (
     <Content padder>
       <Card>
@@ -41,7 +51,11 @@ export default function TodoSingleScreen({ navigation, route }) {
         <View padder>
           <Text style={{ opacity: 0.8, fontSize: 13 }}>Audio Message</Text>
 
-          {todo.audioUrl && <Text style={{ fontSize: 14, marginTop: 4 }}>{todo.audioUrl}</Text>}
+          {todo.audioUrl && (
+            <TouchableOpacity onPress={playAudio} style={{ marginRight: 20 }}>
+              <Ionicons name="ios-play" size={24} color="blue" />
+            </TouchableOpacity>
+          )}
         </View>
       </Card>
 
