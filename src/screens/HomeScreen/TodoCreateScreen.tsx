@@ -12,9 +12,17 @@ export default function CreateTodo() {
 
   const [{ context, value, matches }, send] = useMachine(audioMachine, {
     context: {
+      // @ts-ignore
       sound: new Audio.Sound(),
       recording: new Audio.Recording(),
       audioUrl: null,
+      checkRecordPermission: async () => {
+        const permission = await Permissions.askAsync(Permissions.AUDIO_RECORDING)
+
+        if (permission.status !== 'granted') {
+          throw 'Does not have microphone access'
+        }
+      },
       startRecording: async (recording: any, sound: any) => {
         await Audio.setAudioModeAsync({
           allowsRecordingIOS: true,
@@ -31,7 +39,8 @@ export default function CreateTodo() {
         }
 
         await recording.prepareToRecordAsync(Audio.RECORDING_OPTIONS_PRESET_LOW_QUALITY)
-        recording.setOnRecordingStatusUpdate((status: any) => console.log(status))
+        // recording.setOnRecordingStatusUpdate((status: any) => console.log(status))
+        recording.setOnRecordingStatusUpdate()
         await recording.startAsync()
       },
       stopRecording: async (recording: any) => {
@@ -40,23 +49,32 @@ export default function CreateTodo() {
 
         return info
       },
-      checkRecordPermission: async () => {
-        const permission = await Permissions.askAsync(Permissions.AUDIO_RECORDING)
-
-        if (permission.status !== 'granted') {
-          throw 'Does not have microphone access'
-        }
-      },
       deleteRecording: async (audioUrl: any) => {
         await FileSystem.deleteAsync(audioUrl)
       },
+      playRecording: async (recording: any, sound: any) => {
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+          interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX,
+          playsInSilentModeIOS: true,
+          shouldDuckAndroid: true,
+          interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DO_NOT_MIX,
+          playThroughEarpieceAndroid: false,
+          staysActiveInBackground: true,
+        })
+
+        const { sound: recordingSound } = await recording.createNewLoadedSoundAsync({})
+        await recordingSound.playAsync()
+      },
     },
     actions: {
-      assignRecording: assign((_, { data }) => ({
-        audioUrl: data.uri,
-        recording: new Audio.Recording(),
-      })),
-      deleteRecording: assign({ audioUrl: null }),
+      assignRecording: assign({
+        audioUrl: (_, { data }: any) => data.uri,
+      }),
+      deleteRecording: assign({
+        audioUrl: null,
+        recording: () => new Audio.Recording(),
+      }),
     },
     gurads: {},
   })
@@ -107,7 +125,8 @@ export default function CreateTodo() {
             {matches('has_permission.stopping_record') && <Text>stopping_record</Text>}
 
             {matches('has_permission.has_recording') && (
-              <Text>
+              <Text style={{ textAlign: 'center' }}>
+                <Button title="Play" onPress={() => send('PLAY')} />
                 <Button title="Delete Recording" onPress={() => send('DELETE')} />
               </Text>
             )}
@@ -211,10 +230,11 @@ const audioMachine = Machine({
 
         playing: {
           invoke: {
-            src: async () => true,
+            src: async ({ playRecording, recording, sound }) => playRecording(recording, sound),
             onDone: 'has_recording',
             onError: {
-              actions: [() => console.log('4')],
+              target: 'has_recording',
+              actions: [(_, error) => console.log(error)],
             },
           },
         },
