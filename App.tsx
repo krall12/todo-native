@@ -13,7 +13,7 @@ setConsole({
   error: console.warn,
 })
 
-const queryCache = new QueryCache()
+export const queryCache = new QueryCache()
 
 export default function App() {
   React.useLayoutEffect(() => {

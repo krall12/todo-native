@@ -1,4 +1,5 @@
 import React from 'react'
+import { Text } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
 export const AuthContext = React.createContext<any>({})
@@ -98,5 +99,10 @@ export default function AuthProvider({ children }: any) {
     [state]
   )
 
-  return <AuthContext.Provider value={authContext}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={authContext}>
+      {children}
+      <Text>{JSON.stringify(authContext.user, null, 2)}</Text>
+    </AuthContext.Provider>
+  )
 }
