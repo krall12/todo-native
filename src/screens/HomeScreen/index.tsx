@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons'
 
 import TodoViewScreen from './TodoViewScreen'
 import TodoCreateScreen from './TodoCreateScreen'
+import TodoSingleScreen from './TodoSingleScreen'
 
 const HomeStack = createStackNavigator()
 
@@ -18,6 +19,21 @@ export default function HomeScreen({ navigation }: any) {
           headerRight: () => (
             <TouchableOpacity onPress={() => navigation.navigate('TodoCreate')} style={{ marginRight: 20 }}>
               <Ionicons name="ios-add" size={34} color="blue" />
+            </TouchableOpacity>
+          ),
+        }}
+      />
+
+      <HomeStack.Screen
+        name="TodoSingle"
+        component={TodoSingleScreen}
+        options={{
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={() => navigation.navigate('TodoSingleEdit')}
+              style={{ marginRight: 20 }}
+            >
+              <Ionicons name="md-create" size={24} color="blue" />
             </TouchableOpacity>
           ),
         }}

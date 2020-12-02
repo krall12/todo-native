@@ -4,7 +4,7 @@ import { AuthContext } from '../../context/AuthContext'
 import { useQuery, useQueryCache } from 'react-query'
 import { List, ListItem, Right, Text, Body, Icon, CheckBox } from 'native-base'
 
-export default function TodoViewScreen() {
+export default function TodoViewScreen({ navigation }) {
   const queryCache = useQueryCache()
   const context = React.useContext(AuthContext)
   const [refreshing, setRefreshing] = React.useState(false)
@@ -47,7 +47,7 @@ export default function TodoViewScreen() {
         keyExtractor={(item) => String(item.id)}
         renderItem={({ item }) => (
           <List style={{ backgroundColor: '#fff' }}>
-            <ListItem avatar>
+            <ListItem avatar onPress={() => navigation.navigate('TodoSingle', { todoId: item.id })}>
               <CheckBox checked={!!item.isComplete} onPress={() => handleToggleComplete(item)} />
               <Body>
                 <Text>{item.title}</Text>

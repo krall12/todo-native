@@ -9,7 +9,7 @@ import { useMachine } from '@xstate/react'
 import { AuthContext } from '../../context/AuthContext'
 import { useQueryCache } from 'react-query'
 
-export default function CreateTodo({ navigation }) {
+export default function CreateTodo({ navigation }: any) {
   const queryCache = useQueryCache()
   const [fields, setFields] = useState({ title: '', description: '' })
   const authContext = useContext(AuthContext)
