@@ -11,44 +11,8 @@ export default function AuthProvider({ children }: any) {
     user: null,
   })
 
-  const [oldState, dispatch] = React.useReducer(
-    (prevState: any, action: any) => {
-      switch (action.type) {
-        case 'RESTORE_TOKEN':
-          return {
-            ...prevState,
-            userToken: action.token,
-            user: action.user,
-            isLoading: false,
-          }
-        case 'SIGN_IN':
-          AsyncStorage.setItem('userToken', action.token)
-          AsyncStorage.setItem('user', JSON.stringify(action.user))
-          return {
-            ...prevState,
-            isSignout: false,
-            userToken: action.token,
-            user: action.user,
-          }
-        case 'SIGN_OUT':
-          AsyncStorage.removeItem('userToken')
-          AsyncStorage.removeItem('user')
-          return {
-            ...prevState,
-            isSignout: true,
-            userToken: null,
-          }
-      }
-    },
-    {
-      isLoading: true,
-      isSignout: false,
-      userToken: null,
-    }
-  )
-
   const restoreToken = (token: string, user: any) => {
-    setState({ isSignedIn: true, userToken: token, user })
+    setState({ isSignedIn: true, userToken: token, user: JSON.parse(user) })
   }
 
   const signIn = async (data: { email: string; password: string }) => {
@@ -57,6 +21,8 @@ export default function AuthProvider({ children }: any) {
       body: JSON.stringify({ email: data.email, password: data.password }),
       headers: { 'Content-Type': 'application/json' },
     }).then((res) => res.json())
+
+    console.log(result)
 
     if (result.token) {
       AsyncStorage.setItem('userToken', result.token)
