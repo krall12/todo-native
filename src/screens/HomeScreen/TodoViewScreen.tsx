@@ -51,7 +51,7 @@ export default function TodoViewScreen() {
               <CheckBox checked={!!item.isComplete} onPress={() => handleToggleComplete(item)} />
               <Body>
                 <Text>{item.title}</Text>
-                <Text note>{item.description}</Text>
+                {item.description && <Text note>{item.description}</Text>}
               </Body>
               <Right>
                 <View style={{ flex: 1, justifyContent: 'center' }}>

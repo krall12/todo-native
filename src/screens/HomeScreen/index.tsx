@@ -1,6 +1,6 @@
 import React from 'react'
 import { createStackNavigator } from '@react-navigation/stack'
-import { Button, TouchableOpacity } from 'react-native'
+import { TouchableOpacity } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 
 import TodoViewScreen from './TodoViewScreen'
@@ -23,18 +23,7 @@ export default function HomeScreen({ navigation }: any) {
         }}
       />
 
-      <HomeStack.Screen
-        name="TodoCreate"
-        component={TodoCreateScreen}
-        options={{
-          headerTitle: 'Create',
-          // headerRight: () => (
-          //   <TouchableOpacity onPress={openCreateSheet} style={{ marginRight: 20 }}>
-          //     <Ionicons name="ios-add" size={34} color="blue" />
-          //   </TouchableOpacity>
-          // ),
-        }}
-      />
+      <HomeStack.Screen name="TodoCreate" component={TodoCreateScreen} />
     </HomeStack.Navigator>
   )
 }
