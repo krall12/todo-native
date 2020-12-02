@@ -8,47 +8,37 @@ import { Machine, assign } from 'xstate'
 import { useMachine } from '@xstate/react'
 
 export default function CreateTodo() {
-  const [fields, setFields] = useState({ title: '', description: '', audioUrl: '' })
+  const [fields, setFields] = useState({ title: '', description: '' })
 
   const [{ context, value, matches }, send] = useMachine(audioMachine, {
     context: {
       sound: new Audio.Sound(),
       recording: new Audio.Recording(),
-      startRecording: async ({ recording, sound }: any) => {
-        try {
-          await Audio.setAudioModeAsync({
-            allowsRecordingIOS: true,
-            interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX,
-            playsInSilentModeIOS: true,
-            shouldDuckAndroid: true,
-            interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DO_NOT_MIX,
-            playThroughEarpieceAndroid: false,
-            staysActiveInBackground: true,
-          })
+      audioUrl: null,
+      startRecording: async (recording: any, sound: any) => {
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: true,
+          interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX,
+          playsInSilentModeIOS: true,
+          shouldDuckAndroid: true,
+          interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DO_NOT_MIX,
+          playThroughEarpieceAndroid: false,
+          staysActiveInBackground: true,
+        })
 
-          if (sound !== null) {
-            console.log('stop whatever sound is playing')
-          }
-
-          await recording.prepareToRecordAsync(Audio.RECORDING_OPTIONS_PRESET_LOW_QUALITY)
-          recording.setOnRecordingStatusUpdate((status: any) => console.log(status))
-          await recording.startAsync()
-        } catch (error) {
-          // An error occurred!
-          console.log(error)
+        if (sound !== null) {
+          console.log('stop whatever sound is playing')
         }
+
+        await recording.prepareToRecordAsync(Audio.RECORDING_OPTIONS_PRESET_LOW_QUALITY)
+        recording.setOnRecordingStatusUpdate((status: any) => console.log(status))
+        await recording.startAsync()
       },
-      stopRecording: async ({ recording }: any) => {
-        try {
-          await recording.stopAndUnloadAsync()
-          const info = await FileSystem.getInfoAsync(recording.getURI() || '')
-          setFields((s) => ({ ...s, audioUrl: info.uri }))
+      stopRecording: async (recording: any) => {
+        await recording.stopAndUnloadAsync()
+        const info = await FileSystem.getInfoAsync(recording.getURI() || '')
 
-          // // @ts-ignore
-          // audioRecording = null
-        } catch (error) {
-          console.log(error)
-        }
+        return info
       },
       checkRecordPermission: async () => {
         const permission = await Permissions.askAsync(Permissions.AUDIO_RECORDING)
@@ -57,8 +47,17 @@ export default function CreateTodo() {
           throw 'Does not have microphone access'
         }
       },
+      deleteRecording: async (audioUrl: any) => {
+        await FileSystem.deleteAsync(audioUrl)
+      },
     },
-    actions: {},
+    actions: {
+      assignRecording: assign((_, { data }) => ({
+        audioUrl: data.uri,
+        recording: new Audio.Recording(),
+      })),
+      deleteRecording: assign({ audioUrl: null }),
+    },
     gurads: {},
   })
 
@@ -81,43 +80,54 @@ export default function CreateTodo() {
           <Text style={{ textAlign: 'center', fontWeight: '500', fontSize: 18 }}>Audio Message</Text>
         </View>
 
-        {matches('permission_denied') ? (
+        {matches('no_permission') && (
           <Text style={{ padding: 10 }}>
             We do not have permission to record on your device. Head to the settings and update your
             preference on microphone usage.
           </Text>
-        ) : (
-          <View padder>
-            {matches('idle') && (
-              <Text style={{ textAlign: 'center' }}>
-                <Button title={matches('start_record') ? 'Done' : 'Record'} onPress={() => send('RECORD')} />
-              </Text>
-            )}
-          </View>
         )}
 
-        {/* ) : state.audioUrl ? (
+        {matches('has_permission') && (
           <View padder>
-            <Text style={{ textAlign: 'center' }}>Audio message recorded.</Text>
+            {matches('has_permission.idle') && (
+              <Text style={{ textAlign: 'center' }}>
+                <Button title="Record" onPress={() => send('RECORD')} />
+              </Text>
+            )}
 
-            <Button title={state.isPlaying ? 'Playing...' : 'Play back'} onPress={playBackAudio} />
+            {matches('has_permission.starting_record') && <Text>starting_record</Text>}
+
+            {matches('has_permission.recording') && (
+              <Text style={{ textAlign: 'center' }}>
+                Recording...
+                <Button title="Stop" onPress={() => send('STOP')} />
+              </Text>
+            )}
+
+            {matches('has_permission.stopping_record') && <Text>stopping_record</Text>}
+
+            {matches('has_permission.has_recording') && (
+              <Text>
+                <Button title="Delete Recording" onPress={() => send('DELETE')} />
+              </Text>
+            )}
+
+            {matches('has_permission.deleting') && <Text>deleting</Text>}
+
+            {matches('has_permission.playing') && <Text>playing</Text>}
           </View>
-        ) : (
-          <View padder>
-            <Button title={state.isRecording ? 'Done' : 'Record'} onPress={record} />
-          </View>
-        )} */}
+        )}
       </Card>
 
-      {/* <TouchableHighlight
+      <TouchableHighlight
         onPress={console.log}
         style={{ backgroundColor: PlatformColor('systemBlue'), padding: 10, marginTop: 10, borderRadius: 4 }}
       >
         <Text style={{ color: '#fff', textAlign: 'center', fontSize: 18, fontWeight: '600' }}>Save Todo</Text>
-      </TouchableHighlight> */}
+      </TouchableHighlight>
 
       <Text>{JSON.stringify(fields, null, 2)}</Text>
-      <Text>{JSON.stringify(context.hasRecordingPermission, null, 2)}</Text>
+      <Text>{JSON.stringify(context.audioUrl, null, 2)}</Text>
       <Text>{JSON.stringify(value, null, 2)}</Text>
     </Content>
   )
@@ -128,45 +138,142 @@ const audioMachine = Machine({
   initial: 'checking_permission',
   states: {
     checking_permission: {
+      id: 'check-permission',
       invoke: {
         src: async ({ checkRecordPermission }) => checkRecordPermission(),
-        onDone: 'idle',
-        onError: 'permission_denied',
+        onDone: 'has_permission',
+        onError: 'no_permission',
       },
     },
-    permission_denied: {
+
+    no_permission: {
       type: 'final',
     },
-    idle: {
-      on: {
-        RECORD: 'start_record',
-      },
-    },
-    start_record: {
-      invoke: {
-        src: async ({ startRecording }) => startRecording(),
-        onDone: 'record_done',
-      },
-    },
-    record_done: {
-      on: {
-        DELETE: 'idle',
-        LOAD_RECORDING: 'loading_recording',
-      },
-    },
-    loading_recording: {
-      on: {
-        LOADED: 'playing',
-      },
-    },
-    playing: {
-      on: {
-        PLAY_FINISH: 'record_done',
-        STOP: 'record_done',
+
+    has_permission: {
+      initial: 'idle',
+      states: {
+        idle: {
+          on: {
+            RECORD: 'starting_record',
+          },
+        },
+
+        starting_record: {
+          id: 'starting-record',
+          invoke: {
+            src: async ({ startRecording, recording, sound }) => startRecording(recording, sound),
+            onDone: 'recording',
+            onError: {
+              actions: [(_, error) => console.log(error)],
+            },
+          },
+        },
+
+        recording: {
+          on: {
+            STOP: 'stopping_record',
+          },
+        },
+
+        stopping_record: {
+          invoke: {
+            src: async ({ stopRecording, recording, sound }) => stopRecording(recording, sound),
+            onDone: {
+              actions: 'assignRecording',
+              target: 'has_recording',
+            },
+            onError: {
+              actions: [(_, error) => console.log(error)],
+            },
+          },
+        },
+
+        has_recording: {
+          on: {
+            PLAY: 'playing',
+            DELETE: 'deleting',
+          },
+        },
+
+        deleting: {
+          invoke: {
+            src: async ({ audioUrl, deleteRecording }) => deleteRecording(audioUrl),
+            onDone: {
+              target: 'idle',
+              actions: 'deleteRecording',
+            },
+            onError: {
+              actions: [(_, error) => console.log(error)],
+            },
+          },
+        },
+
+        playing: {
+          invoke: {
+            src: async () => true,
+            onDone: 'has_recording',
+            onError: {
+              actions: [() => console.log('4')],
+            },
+          },
+        },
       },
     },
   },
 })
+
+// const audioMachine = Machine({
+//   id: 'audio-machine',
+//   initial: 'checking_permission',
+//   states: {
+//     checking_permission: {
+//       invoke: {
+//         src: async ({ checkRecordPermission }) => checkRecordPermission(),
+//         onDone: 'idle',
+//         onError: 'permission_denied',
+//       },
+//     },
+//     permission_denied: {
+//       type: 'final',
+//     },
+//     idle: {
+//       on: {
+//         RECORD: 'start_record',
+//       },
+//     },
+//     start_record: {
+//       invoke: {
+//         src: async ({ startRecording, recording, sound }) => startRecording(recording, sound),
+//         onDone: 'record_done',
+//         onError: { actions: (_, { data }) => console.log(data) },
+//       },
+//     },
+//     record_done: {
+//       invoke: {
+//         src: async ({ stopRecording, recording, sound }) => stopRecording(recording, sound),
+//         onDone: 'done',
+//         onError: { actions: (_, { data }) => console.log(data) },
+//       },
+//       // on: {
+//       //   DELETE: 'idle',
+//       //   LOAD_RECORDING: 'loading_recording',
+//       // },
+//     },
+//     done: {},
+//     loading_recording: {
+//       on: {
+//         LOADED: 'playing',
+//       },
+//     },
+//     playing: {
+//       on: {
+//         PLAY_FINISH: 'record_done',
+//         STOP: 'record_done',
+//       },
+//     },
+//   },
+// })
 
 // export default function CreateTodo() {
 //   const [state, setState] = useState({
