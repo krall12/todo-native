@@ -4,10 +4,12 @@ import { View, Card } from 'native-base'
 import { AuthContext } from '../../context/AuthContext'
 import { ColorPicker, fromHsv, toHsv } from 'react-native-color-picker'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { useQueryCache } from 'react-query'
 
 export default function SettingsScreen() {
   const auth = React.useContext(AuthContext)
-  const [color, setColor] = useState(toHsv(auth.user?.accentColor))
+  const queryCache = useQueryCache()
+  const [color, setColor] = useState(toHsv(auth.userSettings?.accentColor))
 
   const [state, setState] = useState<'idle' | 'loading' | 'error'>('idle')
   const setAccentColor = async () => {
@@ -16,6 +18,8 @@ export default function SettingsScreen() {
       body: JSON.stringify({ accentColor: fromHsv(color) }),
       headers: { 'Content-Type': 'application/json' },
     }).then((res) => res.json())
+
+    await queryCache.refetchQueries('user-settings')
   }
 
   return (
@@ -23,7 +27,7 @@ export default function SettingsScreen() {
       <Card style={{ flex: 1 }}>
         <View padder style={{ flex: 1 }}>
           <ColorPicker
-            defaultColor={toHsv(auth.user?.accentColor)}
+            defaultColor={toHsv(auth.userSettings?.accentColor)}
             onColorChange={(color) => setColor(color)}
             style={{ flex: 1 }}
           />
@@ -35,7 +39,7 @@ export default function SettingsScreen() {
         </View>
       </Card>
       <View style={{ flex: 1 }}>
-        {fromHsv(color) !== auth.user?.accentColor && (
+        {fromHsv(color) !== auth.userSettings?.accentColor && (
           <Button
             title={state === 'idle' ? 'Update App Accent Color' : 'Loading...'}
             onPress={setAccentColor}

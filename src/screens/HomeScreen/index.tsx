@@ -16,7 +16,7 @@ export default function HomeScreen({ navigation }: any) {
   return (
     <HomeStack.Navigator
       screenOptions={{
-        headerStyle: { backgroundColor: authContext.user?.accentColor },
+        headerStyle: { backgroundColor: authContext.userSettings?.accentColor },
       }}
     >
       <HomeStack.Screen

@@ -27,13 +27,13 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <AuthContextProvider>
-        <ReactQueryCacheProvider queryCache={queryCache}>
+      <ReactQueryCacheProvider queryCache={queryCache}>
+        <AuthContextProvider>
           <Container>
             <RootNavigation />
           </Container>
-        </ReactQueryCacheProvider>
-      </AuthContextProvider>
+        </AuthContextProvider>
+      </ReactQueryCacheProvider>
     </SafeAreaProvider>
   )
 }

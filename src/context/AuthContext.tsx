@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { Text } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useQuery } from 'react-query'
 
 export const AuthContext = React.createContext<any>({})
 
@@ -10,6 +11,18 @@ export default function AuthProvider({ children }: any) {
     userToken: null,
     user: null,
   })
+
+  const { data: userSettings } = useQuery(
+    'user-settings',
+    () =>
+      fetch('http://192.168.1.172:3001/api/user-settings/' + state?.user?.id, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      }).then((res) => res.json()),
+    {
+      enabled: state?.user?.id,
+    }
+  )
 
   const restoreToken = (token: string, user: any) => {
     setState({ isSignedIn: true, userToken: token, user: JSON.parse(user) })
@@ -22,27 +35,29 @@ export default function AuthProvider({ children }: any) {
       headers: { 'Content-Type': 'application/json' },
     }).then((res) => res.json())
 
-    console.log(result)
-
     if (result.token) {
+      setState({ isSignedIn: true, userToken: result.token, user: result.user })
       AsyncStorage.setItem('userToken', result.token)
       AsyncStorage.setItem('user', JSON.stringify(result.user))
-      setState({ isSignedIn: true, userToken: result.token, user: result.user })
     }
   }
 
   const signOut = () => {
+    setState({ isSignedIn: false, userToken: null, user: null })
     AsyncStorage.removeItem('userToken')
     AsyncStorage.removeItem('user')
-    setState({ isSignedIn: false, userToken: null, user: null })
   }
 
-  const authContext = {
-    user: state.user,
-    userToken: state.userToken,
-    signIn,
-    signOut,
-  }
+  const authContext = useMemo(
+    () => ({
+      user: state.user,
+      userToken: state.userToken,
+      userSettings,
+      signIn,
+      signOut,
+    }),
+    [state, signIn, signOut]
+  )
 
   useEffect(() => {
     // Fetch the token from storage then navigate to our appropriate place
@@ -50,7 +65,6 @@ export default function AuthProvider({ children }: any) {
       try {
         const userToken = await AsyncStorage.getItem('userToken')
         const user = await AsyncStorage.getItem('user')
-
         // This will switch to the App screen or Auth screen and this loading
         // screen will be unmounted and thrown away.
         restoreToken(userToken, user)
@@ -61,10 +75,5 @@ export default function AuthProvider({ children }: any) {
     })()
   }, [])
 
-  return (
-    <AuthContext.Provider value={authContext}>
-      {children}
-      <Text>{JSON.stringify(state, null, 2)}</Text>
-    </AuthContext.Provider>
-  )
+  return <AuthContext.Provider value={authContext}>{children}</AuthContext.Provider>
 }
